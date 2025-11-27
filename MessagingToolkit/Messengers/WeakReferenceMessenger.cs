@@ -8,6 +8,7 @@ public class WeakReferenceMessenger : IMessenger
 {
     private readonly ConcurrentDictionary<Type, List<(WeakReference Reference, object Handler)>> _handlers = new();
 
+    /// <inheritdoc />
     public void Publish<T>(T message)
     {
         if (!_handlers.TryGetValue(typeof(T), out var handlers))
@@ -22,6 +23,7 @@ public class WeakReferenceMessenger : IMessenger
         }
     }
 
+    /// <inheritdoc />
     public async Task PublishAsync<T>(T message)
     {
         if (!_handlers.TryGetValue(typeof(T), out var handlers))
@@ -35,6 +37,7 @@ public class WeakReferenceMessenger : IMessenger
             .ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
     public void Register<T>(object recipient, Action<T> action)
     {
         _handlers
@@ -42,6 +45,7 @@ public class WeakReferenceMessenger : IMessenger
             .Add((new WeakReference(recipient), new Handler<T>(action)));
     }
 
+    /// <inheritdoc />
     public void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
     {
         _handlers
@@ -49,14 +53,21 @@ public class WeakReferenceMessenger : IMessenger
             .Add((new WeakReference(recipient), new AsyncHandler<T>(action)));
     }
 
+    /// <inheritdoc />
     public void Unregister<T>(object recipient)
     {
-        if (_handlers.TryGetValue(typeof(T), out var handlers))
+        lock (_handlers)
         {
-            handlers.RemoveAll(tuple => !tuple.Reference.IsAlive || ReferenceEquals(tuple.Reference.Target, recipient));
+            if (_handlers.TryGetValue(typeof(T), out var handlers))
+            {
+                handlers.RemoveAll(tuple => !tuple.Reference.IsAlive || ReferenceEquals(tuple.Reference.Target, recipient));
+            }
         }
     }
 
+    /// <summary>
+    /// Removes all expired weak references.
+    /// </summary>
     public void Cleanup()
     {
         foreach (var kvp in _handlers)
