@@ -26,4 +26,8 @@
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\MessagingToolkit\MessagingToolkit.csproj" />
+    </ItemGroup>
+
 </Project>

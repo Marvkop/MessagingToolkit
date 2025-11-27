@@ -28,10 +28,11 @@ public class WeakReferenceMessenger : IMessenger
             return;
 
         await Task.WhenAll(handlers
-            .Where(handler => handler.Reference.IsAlive)
-            .Select(handler => handler.Handler)
-            .OfType<IHandler<T>>()
-            .Select(handler => handler.ExecuteAsync(message)));
+                .Where(handler => handler.Reference.IsAlive)
+                .Select(handler => handler.Handler)
+                .OfType<IHandler<T>>()
+                .Select(handler => handler.ExecuteAsync(message)))
+            .ConfigureAwait(false);
     }
 
     public void Register<T>(object recipient, Action<T> action)

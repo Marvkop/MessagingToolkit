@@ -26,9 +26,10 @@ public class StrongReferenceMessenger : IMessenger
             return;
 
         await Task.WhenAll(handlers
-            .Select(handler => handler.Handler)
-            .OfType<IHandler<T>>()
-            .Select(handler => handler.ExecuteAsync(message)));
+                .Select(handler => handler.Handler)
+                .OfType<IHandler<T>>()
+                .Select(handler => handler.ExecuteAsync(message)))
+            .ConfigureAwait(false);
     }
 
     public void Register<T>(object recipient, Action<T> action)
