@@ -7,56 +7,69 @@ namespace MessagingToolkit.Messengers;
 public class WeakReferenceMessenger : IMessenger
 {
     private readonly ConcurrentDictionary<Type, List<(WeakReference Reference, object Handler)>> _handlers = new();
+    private readonly ReaderWriterLockSlim _lock = new();
 
     /// <inheritdoc />
     public void Publish<T>(T message)
     {
-        if (!_handlers.TryGetValue(typeof(T), out var handlers))
-            return;
-
-        foreach (var handler in handlers
-                     .Where(handler => handler.Reference.IsAlive)
-                     .Select(handler => handler.Handler)
-                     .OfType<IHandler<T>>())
+        using (_lock.ReadLock())
         {
-            handler.Execute(message);
+            if (!_handlers.TryGetValue(typeof(T), out var handlers))
+                return;
+
+            foreach (var handler in handlers
+                         .Where(handler => handler.Reference.IsAlive)
+                         .Select(handler => handler.Handler)
+                         .OfType<IHandler<T>>())
+            {
+                handler.Execute(message);
+            }
         }
     }
 
     /// <inheritdoc />
     public async Task PublishAsync<T>(T message)
     {
-        if (!_handlers.TryGetValue(typeof(T), out var handlers))
-            return;
+        using (_lock.ReadLock())
+        {
+            if (!_handlers.TryGetValue(typeof(T), out var handlers))
+                return;
 
-        await Task.WhenAll(handlers
-                .Where(handler => handler.Reference.IsAlive)
-                .Select(handler => handler.Handler)
-                .OfType<IHandler<T>>()
-                .Select(handler => handler.ExecuteAsync(message)))
-            .ConfigureAwait(false);
+            await Task.WhenAll(handlers
+                    .Where(handler => handler.Reference.IsAlive)
+                    .Select(handler => handler.Handler)
+                    .OfType<IHandler<T>>()
+                    .Select(handler => handler.ExecuteAsync(message)))
+                .ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc />
     public void Register<T>(object recipient, Action<T> action)
     {
-        _handlers
-            .GetOrAdd(typeof(T), () => [])
-            .Add((new WeakReference(recipient), new Handler<T>(action)));
+        using (_lock.WriteLock())
+        {
+            _handlers
+                .GetOrAdd(typeof(T), () => [])
+                .Add((new WeakReference(recipient), new Handler<T>(action)));
+        }
     }
 
     /// <inheritdoc />
     public void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
     {
-        _handlers
-            .GetOrAdd(typeof(T), () => [])
-            .Add((new WeakReference(recipient), new AsyncHandler<T>(action)));
+        using (_lock.WriteLock())
+        {
+            _handlers
+                .GetOrAdd(typeof(T), () => [])
+                .Add((new WeakReference(recipient), new AsyncHandler<T>(action)));
+        }
     }
 
     /// <inheritdoc />
     public void Unregister<T>(object recipient)
     {
-        lock (_handlers)
+        using (_lock.WriteLock())
         {
             if (_handlers.TryGetValue(typeof(T), out var handlers))
             {
@@ -70,9 +83,12 @@ public class WeakReferenceMessenger : IMessenger
     /// </summary>
     public void Cleanup()
     {
-        foreach (var kvp in _handlers)
+        using (_lock.WriteLock())
         {
-            kvp.Value.RemoveAll(tuple => !tuple.Reference.IsAlive);
+            foreach (var kvp in _handlers)
+            {
+                kvp.Value.RemoveAll(tuple => !tuple.Reference.IsAlive);
+            }
         }
     }
 }
