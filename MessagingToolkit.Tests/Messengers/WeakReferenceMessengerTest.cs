@@ -3,15 +3,15 @@
 namespace MessagingToolkit.Tests.Messengers;
 
 [TestFixture]
-[TestOf(typeof(StrongReferenceMessenger))]
-public class StrongReferenceMessengerTest
+[TestOf(typeof(WeakReferenceMessenger))]
+public class WeakReferenceMessengerTest
 {
-    private StrongReferenceMessenger _sut;
+    private WeakReferenceMessenger _sut;
 
     [SetUp]
     public void SetUp()
     {
-        _sut = new StrongReferenceMessenger();
+        _sut = new WeakReferenceMessenger();
     }
 
     [Test]
@@ -33,7 +33,6 @@ public class StrongReferenceMessengerTest
         var counter = 0;
 
         _sut.Register<TestMessage>(this, _ => Increase(ref counter));
-
         _sut.Publish(new TestMessage());
 
         Assert.That(counter, Is.EqualTo(1));

@@ -36,14 +36,14 @@ public class StrongReferenceMessenger : IMessenger
     {
         _handlers
             .GetOrAdd(typeof(T), () => [])
-            .Add((new WeakReference(recipient), new Handler<T>(action)));
+            .Add((recipient, new Handler<T>(action)));
     }
 
     public void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
     {
         _handlers
             .GetOrAdd(typeof(T), () => [])
-            .Add((new WeakReference(recipient), new AsyncHandler<T>(action)));
+            .Add((recipient, new AsyncHandler<T>(action)));
     }
 
     public void Unregister<T>(object recipient)

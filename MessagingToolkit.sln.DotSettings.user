@@ -5,6 +5,7 @@
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9e3d3617_002D3672_002D4714_002Dbe95_002D4e7ad06282c4/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestPublish" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;NUnit3x::201A0C56-1AB4-4DCA-9DBD-5E4FF398F2A1::net9.0::MessagingToolkit.Tests.Messengers.StrongReferenceMessengerTest&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::201A0C56-1AB4-4DCA-9DBD-5E4FF398F2A1::net9.0::MessagingToolkit.Tests.Messengers.WeakReferenceMessengerTest&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
 	</wpf:ResourceDictionary>
