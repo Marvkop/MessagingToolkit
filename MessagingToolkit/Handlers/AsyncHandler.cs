@@ -8,7 +8,7 @@ public class AsyncHandler<T>(IMessenger.AsyncAction<T> action) : IHandler<T>
 
     public void Execute(T message)
     {
-        _action(message).Wait();
+        _action(message).GetAwaiter().GetResult();
     }
 
     public async Task ExecuteAsync(T message)
