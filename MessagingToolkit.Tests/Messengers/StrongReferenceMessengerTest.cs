@@ -15,6 +15,32 @@ public class StrongReferenceMessengerTest
     }
 
     [Test]
+    public void ChainedPublish()
+    {
+        var counter = 0;
+
+        _sut.Register<TestMessage>(this, _ => Increase(ref counter));
+        _sut.Register<OtherTestMessage>(this, _ => _sut.Publish(new TestMessage()));
+
+        _sut.Publish(new OtherTestMessage());
+
+        Assert.That(counter, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ChainedAsyncPublish()
+    {
+        var holder = new Holder();
+
+        _sut.Register<TestMessage>(this, _ => Increase(holder));
+        _sut.Register<OtherTestMessage>(this, async _ => await _sut.PublishAsync(new TestMessage()));
+
+        await _sut.PublishAsync(new OtherTestMessage());
+
+        Assert.That(holder.Counter, Is.EqualTo(1));
+    }
+
+    [Test]
     public void TestUnregister()
     {
         var counter = 0;
@@ -109,4 +135,6 @@ public class StrongReferenceMessengerTest
     }
 
     private record TestMessage;
+
+    private record OtherTestMessage;
 }

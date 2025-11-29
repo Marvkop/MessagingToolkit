@@ -27,11 +27,13 @@ public class StrongReferenceMessenger : IMessenger
         if (!_handlers.TryGetValue(typeof(T), out var handlers))
             return;
 
-        await Task.WhenAll(handlers
-                .Select(handler => handler.Handler)
-                .OfType<IHandler<T>>()
-                .Select(handler => handler.ExecuteAsync(message)))
-            .ConfigureAwait(false);
+
+        foreach (var handler in handlers
+                     .Select(handler => handler.Handler)
+                     .OfType<IHandler<T>>())
+        {
+            await handler.ExecuteAsync(message);
+        }
     }
 
     /// <inheritdoc />
@@ -45,23 +47,17 @@ public class StrongReferenceMessenger : IMessenger
     /// <inheritdoc />
     public void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
     {
-        lock (_handlers)
-        {
-            _handlers
-                .GetOrAdd(typeof(T), () => [])
-                .Add((recipient, new AsyncHandler<T>(action)));
-        }
+        _handlers
+            .GetOrAdd(typeof(T), () => [])
+            .Add((recipient, new AsyncHandler<T>(action)));
     }
 
     /// <inheritdoc />
     public void Unregister<T>(object recipient)
     {
-        lock (_handlers)
+        if (_handlers.TryGetValue(typeof(T), out var handlers))
         {
-            if (_handlers.TryGetValue(typeof(T), out var handlers))
-            {
-                handlers.RemoveAll(tuple => ReferenceEquals(tuple.Recipient, recipient));
-            }
+            handlers.RemoveAll(tuple => ReferenceEquals(tuple.Recipient, recipient));
         }
     }
 }
