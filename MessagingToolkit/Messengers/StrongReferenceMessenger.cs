@@ -1,36 +1,28 @@
-﻿using System.Collections.Concurrent;
-using MessagingToolkit.Extensions;
-using MessagingToolkit.Handlers;
+﻿using MessagingToolkit.Handlers;
+using MessagingToolkit.Messengers.ReferenceHolder;
 
 namespace MessagingToolkit.Messengers;
 
+/// <summary>
+/// Implementation of <see cref="IMessenger"/> using strong references.
+/// </summary>
 public class StrongReferenceMessenger : IMessenger
 {
-    private readonly ConcurrentDictionary<Type, List<(object Recipient, object Handler)>> _handlers = new();
+    private readonly StrongReferenceHolder _handlers = new();
 
     /// <inheritdoc />
     public void Publish<T>(T message)
     {
-        if (!_handlers.TryGetValue(typeof(T), out var handlers))
-            return;
-
-        foreach (var (_, handler) in handlers)
+        foreach (var handler in _handlers.Get<T>())
         {
-            var handlerInstance = (IHandler<T>)handler;
-            handlerInstance.Execute(message);
+            handler.Execute(message);
         }
     }
 
     /// <inheritdoc />
     public async Task PublishAsync<T>(T message)
     {
-        if (!_handlers.TryGetValue(typeof(T), out var handlers))
-            return;
-
-
-        foreach (var handler in handlers
-                     .Select(handler => handler.Handler)
-                     .OfType<IHandler<T>>())
+        foreach (var handler in _handlers.Get<T>())
         {
             await handler.ExecuteAsync(message);
         }
@@ -39,25 +31,24 @@ public class StrongReferenceMessenger : IMessenger
     /// <inheritdoc />
     public void Register<T>(object recipient, Action<T> action)
     {
-        _handlers
-            .GetOrAdd(typeof(T), () => [])
-            .Add((recipient, new Handler<T>(action)));
+        _handlers.Register(recipient, new Handler<T>(action));
     }
 
     /// <inheritdoc />
     public void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
     {
-        _handlers
-            .GetOrAdd(typeof(T), () => [])
-            .Add((recipient, new AsyncHandler<T>(action)));
+        _handlers.Register(recipient, new AsyncHandler<T>(action));
+    }
+
+    /// <inheritdoc />
+    public void Register<T>(object recipient, IHandler<T> handler)
+    {
+        _handlers.Register(recipient, handler);
     }
 
     /// <inheritdoc />
     public void Unregister<T>(object recipient)
     {
-        if (_handlers.TryGetValue(typeof(T), out var handlers))
-        {
-            handlers.RemoveAll(tuple => ReferenceEquals(tuple.Recipient, recipient));
-        }
+        _handlers.Unregister<T>(recipient);
     }
 }

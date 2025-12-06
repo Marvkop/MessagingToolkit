@@ -1,23 +1,21 @@
-﻿using System.Collections.Concurrent;
-using MessagingToolkit.Extensions;
-using MessagingToolkit.Handlers;
+﻿using MessagingToolkit.Handlers;
+using MessagingToolkit.Messengers.ReferenceHolder;
 
 namespace MessagingToolkit.Messengers;
 
+/// <summary>
+/// Implementation of <see cref="IMessenger"/> using weak references.
+/// <br />
+/// <b>Cleanup is not automatic!</b> Make sure to call <see cref="Cleanup"/> at appropriate times.
+/// </summary>
 public class WeakReferenceMessenger : IMessenger
 {
-    private readonly ConcurrentDictionary<Type, List<(WeakReference Reference, object Handler)>> _handlers = new();
+    private readonly WeakReferenceHolder _handlers = new();
 
     /// <inheritdoc />
     public void Publish<T>(T message)
     {
-        if (!_handlers.TryGetValue(typeof(T), out var handlers))
-            return;
-
-        foreach (var handler in handlers
-                     .Where(handler => handler.Reference.IsAlive)
-                     .Select(handler => handler.Handler)
-                     .OfType<IHandler<T>>())
+        foreach (var handler in _handlers.Get<T>())
         {
             handler.Execute(message);
         }
@@ -26,13 +24,7 @@ public class WeakReferenceMessenger : IMessenger
     /// <inheritdoc />
     public async Task PublishAsync<T>(T message)
     {
-        if (!_handlers.TryGetValue(typeof(T), out var handlers))
-            return;
-
-        foreach (var handler in handlers
-                     .Where(handler => handler.Reference.IsAlive)
-                     .Select(handler => handler.Handler)
-                     .OfType<IHandler<T>>())
+        foreach (var handler in _handlers.Get<T>())
         {
             await handler.ExecuteAsync(message);
         }
@@ -41,36 +33,32 @@ public class WeakReferenceMessenger : IMessenger
     /// <inheritdoc />
     public void Register<T>(object recipient, Action<T> action)
     {
-        _handlers
-            .GetOrAdd(typeof(T), () => [])
-            .Add((new WeakReference(recipient), new Handler<T>(action)));
+        _handlers.Register(recipient, new Handler<T>(action));
     }
 
     /// <inheritdoc />
     public void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
     {
-        _handlers
-            .GetOrAdd(typeof(T), () => [])
-            .Add((new WeakReference(recipient), new AsyncHandler<T>(action)));
+        _handlers.Register(recipient, new AsyncHandler<T>(action));
+    }
+
+    /// <inheritdoc />
+    public void Register<T>(object recipient, IHandler<T> handler)
+    {
+        _handlers.Register(recipient, handler);
     }
 
     /// <inheritdoc />
     public void Unregister<T>(object recipient)
     {
-        if (_handlers.TryGetValue(typeof(T), out var handlers))
-        {
-            handlers.RemoveAll(tuple => !tuple.Reference.IsAlive || ReferenceEquals(tuple.Reference.Target, recipient));
-        }
+        _handlers.Unregister<T>(recipient);
     }
 
     /// <summary>
-    /// Removes all expired weak references.
+    /// Removes all dead weak references.
     /// </summary>
     public void Cleanup()
     {
-        foreach (var kvp in _handlers)
-        {
-            kvp.Value.RemoveAll(tuple => !tuple.Reference.IsAlive);
-        }
+        _handlers.Cleanup();
     }
 }

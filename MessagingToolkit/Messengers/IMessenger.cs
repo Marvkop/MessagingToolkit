@@ -1,5 +1,10 @@
-﻿namespace MessagingToolkit.Messengers;
+﻿using MessagingToolkit.Handlers;
 
+namespace MessagingToolkit.Messengers;
+
+/// <summary>
+/// Implementations handle messaging.
+/// </summary>
 public interface IMessenger
 {
     /// <summary>
@@ -38,6 +43,14 @@ public interface IMessenger
     /// <param name="action">The async-action.</param>
     /// <typeparam name="T">The type of the messages to receive.</typeparam>
     void Register<T>(object recipient, AsyncAction<T> action);
+
+    /// <summary>
+    /// Registers the handler for its recipient and the given type.
+    /// </summary>
+    /// <param name="recipient">The recipient.</param>
+    /// <param name="handler">The handler.</param>
+    /// <typeparam name="T">The type of the messages to receive.</typeparam>
+    void Register<T>(object recipient, IHandler<T> handler);
 
     /// <summary>
     /// Removes the handlers for a given recipient and type.

@@ -4,15 +4,13 @@ namespace MessagingToolkit.Handlers;
 
 public class AsyncHandler<T>(IMessenger.AsyncAction<T> action) : IHandler<T>
 {
-    private readonly IMessenger.AsyncAction<T> _action = action ?? throw new ArgumentNullException(nameof(action));
-
     public void Execute(T message)
     {
-        _action(message).GetAwaiter().GetResult();
+        Task.Run(async () => await action(message)).GetAwaiter().GetResult();
     }
 
     public async Task ExecuteAsync(T message)
     {
-        await _action(message);
+        await action(message);
     }
 }
