@@ -3,7 +3,7 @@ name: .NET Release
 on:
   push:
     tags:
-      - '*'
+      - '^[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$'
 
 jobs:
   release:
@@ -32,4 +32,10 @@ jobs:
       - name: upload
         uses: actions/upload-artifact@v4
         with:
-          path: 'pack/*' 
+          path: 'pack/*'
+
+      - name: create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            pack/*
