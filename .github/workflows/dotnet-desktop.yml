@@ -1,4 +1,4 @@
-name: .NET Desktop
+name: .NET Build
 
 on:
   push:
@@ -7,9 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
     strategy:
       matrix:
         configuration: [Debug, Release]
@@ -17,18 +15,18 @@ jobs:
     runs-on: windows-latest
     
     steps:
-    - name: Checkout
+    - name: checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         
-    - name: Install .NET
+    - name: install .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
         
-    - name: Build
+    - name: build
       run: dotnet build
 
-    - name: Test
+    - name: test
       run: dotnet test

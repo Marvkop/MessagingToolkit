@@ -1,0 +1,36 @@
+name: .NET Release
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: build
+        run: dotnet build
+
+      - name: test
+        run: dotnet test
+
+      - name: pack
+        run: dotnet pack .\MessagingToolkit\MessagingToolkit.csproj -c RELEASE -o pack --include-source -p:Version=${{ github.ref }}
+
+      - name: upload
+        uses: actions/upload-artifact@v4
+        with:
+          path: 'pack/*' 

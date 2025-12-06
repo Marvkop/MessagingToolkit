@@ -8,6 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		.github\workflows\dotnet-desktop.yml = .github\workflows\dotnet-desktop.yml
+		.github\workflows\dotnet-release.yml = .github\workflows\dotnet-release.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessagingToolkit.Standalone", "MessagingToolkit.Standalone\MessagingToolkit.Standalone.csproj", "{016F2040-1A32-4F39-AA26-B460409C6EBE}"
