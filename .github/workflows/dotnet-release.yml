@@ -40,3 +40,4 @@ jobs:
         with:
           files: |
             pack/*
+            LICENSE
