@@ -10,7 +10,8 @@ namespace MessagingToolkit.Messengers.ReferenceHolder;
 /// </summary>
 internal class WeakReferenceHolder : IReferenceHolder
 {
-    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<WeakReference, IHandler>> _handlers = new();
+    private readonly ConcurrentDictionary<int, (WeakReference Reference, ISet<Type> Types)> _references = new();
+    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, IList<IHandler>>> _handlers = new();
 
     /// <inheritdoc />
     public void Register<T>(object recipient, IHandler<T> handler)
@@ -21,9 +22,29 @@ internal class WeakReferenceHolder : IReferenceHolder
     /// <inheritdoc />
     public void Register(object recipient, IHandler handler, Type type)
     {
-        _handlers
-            .GetOrAdd(type, _ => new())
-            .AddOrUpdate(new WeakReference(recipient), handler, (_, _) => handler);
+        try
+        {
+            Monitor.Enter(_handlers);
+
+            var hashCode = recipient.GetHashCode();
+            var value = new WeakReference(recipient);
+
+            var (_, types) = _references.GetOrAdd(hashCode, _ => new(value, new HashSet<Type>()));
+
+            types.Add(type);
+
+            _handlers
+                .GetOrAdd(type, _ => new())
+                .AddOrUpdate(hashCode, _ => [handler], (_, list) =>
+                {
+                    list.Add(handler);
+                    return list;
+                });
+        }
+        finally
+        {
+            Monitor.Exit(_handlers);
+        }
     }
 
     /// <inheritdoc />
@@ -35,14 +56,30 @@ internal class WeakReferenceHolder : IReferenceHolder
     /// <inheritdoc />
     public void Unregister(object recipient, Type type)
     {
-        if (_handlers.TryGetValue(type, out var handlers))
+        try
         {
-            var key = handlers.Keys.FirstOrDefault(reference => reference.Target == recipient);
+            Monitor.Enter(_handlers);
 
-            if (key is not null)
+            var hashCode = recipient.GetHashCode();
+
+            if (_references.TryGetValue(hashCode, out var value))
             {
-                handlers.TryRemove(key, out _);
+                value.Types.Remove(type);
             }
+
+            if (_handlers.TryGetValue(type, out var handlers))
+            {
+                handlers.Remove(hashCode, out _);
+
+                if (handlers.IsEmpty)
+                {
+                    _handlers.Remove(type, out _);
+                }
+            }
+        }
+        finally
+        {
+            Monitor.Exit(_handlers);
         }
     }
 
@@ -52,11 +89,20 @@ internal class WeakReferenceHolder : IReferenceHolder
         // explicit implementation to not enumerate twice
         if (_handlers.TryGetValue(typeof(T), out var handlers))
         {
-            return handlers
-                .Where(kvp => kvp.Key.IsAlive)
-                .Select(kvp => kvp.Value)
-                .OfType<IHandler<T>>()
-                .ToArray();
+            try
+            {
+                Monitor.Enter(_handlers);
+
+                return handlers
+                    .Where(kvp => _references[kvp.Key].Reference.IsAlive)
+                    .SelectMany(kvp => kvp.Value)
+                    .OfType<IHandler<T>>()
+                    .ToArray();
+            }
+            finally
+            {
+                Monitor.Exit(_handlers);
+            }
         }
 
         return [];
@@ -67,10 +113,19 @@ internal class WeakReferenceHolder : IReferenceHolder
     {
         if (_handlers.TryGetValue(type, out var handlers))
         {
-            return handlers
-                .Where(kvp => kvp.Key.IsAlive)
-                .Select(kvp => kvp.Value)
-                .ToArray();
+            try
+            {
+                Monitor.Enter(_handlers);
+
+                return handlers
+                    .Where(kvp => _references[kvp.Key].Reference.IsAlive)
+                    .SelectMany(kvp => kvp.Value)
+                    .ToArray();
+            }
+            finally
+            {
+                Monitor.Exit(_handlers);
+            }
         }
 
         return [];
@@ -81,11 +136,32 @@ internal class WeakReferenceHolder : IReferenceHolder
     /// </summary>
     public void Cleanup()
     {
-        foreach (var handlers in _handlers.Values)
+        try
         {
-            var deadReferences = handlers.Keys.Where(x => !x.IsAlive).ToList();
+            Monitor.Enter(_handlers);
 
-            deadReferences.ForEach(x => handlers.TryRemove(x, out _));
+            var deadReferences = _references.Where(kvp => !kvp.Value.Reference.IsAlive).Select(kvp => (kvp.Key, kvp.Value.Types)).ToList();
+
+            foreach (var (key, types) in deadReferences)
+            {
+                foreach (var type in types)
+                {
+                    var handlers = _handlers[type];
+
+                    handlers.Remove(key, out _);
+
+                    if (handlers.IsEmpty)
+                    {
+                        _handlers.Remove(type, out _);
+                    }
+                }
+
+                _references.Remove(key, out _);
+            }
+        }
+        finally
+        {
+            Monitor.Exit(_handlers);
         }
     }
 }
