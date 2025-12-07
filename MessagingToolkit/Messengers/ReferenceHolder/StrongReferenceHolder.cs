@@ -7,6 +7,7 @@ namespace MessagingToolkit.Messengers.ReferenceHolder;
 /// <summary>
 /// Implementation of <see cref="IReferenceHolder"/> using strong references.
 /// </summary>
+/// <param name="isThreadSafe">if true, the handlers are locked during registration and deregistration.</param>
 public class StrongReferenceHolder(bool isThreadSafe) : IReferenceHolder
 {
     private readonly ConcurrentDictionary<Type, ConcurrentDictionary<object, IList<IHandler>>> _handlers = new();

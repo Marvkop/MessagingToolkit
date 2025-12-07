@@ -9,6 +9,7 @@ namespace MessagingToolkit.Messengers.ReferenceHolder;
 /// <br />
 /// <b>Cleanup is not automatic!</b> Make sure to call <see cref="Cleanup"/> at appropriate times.
 /// </summary>
+/// <param name="isThreadSafe">if true, the handlers are locked during registration, deregistration and cleanup.</param>
 internal class WeakReferenceHolder(bool isThreadSafe) : IReferenceHolder
 {
     private readonly ConcurrentDictionary<int, (WeakReference Reference, ISet<Type> Types)> _references = new();

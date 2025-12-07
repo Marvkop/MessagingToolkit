@@ -6,6 +6,7 @@ namespace MessagingToolkit.Messengers;
 /// <summary>
 /// Implementation of <see cref="IMessenger"/> using strong references.
 /// </summary>
+/// <param name="isThreadSafe">if true, the handlers are locked during registration and deregistration.</param>
 public class StrongReferenceMessenger(bool isThreadSafe) : IMessenger
 {
     private readonly StrongReferenceHolder _handlers = new(isThreadSafe);

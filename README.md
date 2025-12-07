@@ -10,7 +10,7 @@ There are two base-implementations that differ only in their reference-handling.
 > The WeakReferenceMessenger implementation has a cleanup method that must be called manually at appropriate times!
 
 ```csharp
-var messenger = new [Weak|Strong]ReferenceMessenger();
+var messenger = new [Weak|Strong]ReferenceMessenger([true|false]);
 ```
 
 ### Registration
