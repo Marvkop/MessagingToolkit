@@ -41,3 +41,4 @@ jobs:
           files: |
             pack/*
             LICENSE
+            README.md
