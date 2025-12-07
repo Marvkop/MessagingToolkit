@@ -11,25 +11,20 @@ public partial class MainWindowViewModel : ObservableObject
     public MainWindowViewModel()
     {
         _messenger.Register<TestMessage>(this, async _ => await DoOtherStuff());
+        _messenger.Register<TestMessage>(this, _ => DoStuff());
     }
 
     [RelayCommand]
-    private async Task DoStuff()
+    private void DoStuff()
     {
-        Console.WriteLine(nameof(DoStuff));
-
-        await _messenger.PublishAsync(new TestMessage());
-
-        Console.WriteLine(nameof(DoStuff) + " after");
+        // do synchronous stuff
     }
 
     private async Task DoOtherStuff()
     {
-        Console.WriteLine(nameof(DoOtherStuff) + " before");
+        // do asynchronous stuff
 
-        await Task.Delay(1000);
-
-        Console.WriteLine(nameof(DoOtherStuff) + " after");
+        await Task.CompletedTask;
     }
 
     private record TestMessage;
