@@ -7,7 +7,7 @@
 There are two base-implementations that differ only in their reference-handling.
 
 > [!WARNING]
-> :warning: The WeakReferenceMessenger implementation has a cleanup method that must be called at appropriate times! 
+> The WeakReferenceMessenger implementation has a cleanup method that must be called at appropriate times! 
 
 ```csharp
 private readonly IMessenger _messenger = new [Weak|Strong]ReferenceMessenger();
