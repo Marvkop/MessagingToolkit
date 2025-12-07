@@ -14,7 +14,7 @@ public class WeakReferenceMessenger(bool isThreadSafe) : IMessenger
     private readonly WeakReferenceHolder _handlers = new(isThreadSafe);
 
     /// <inheritdoc />
-    public void Publish<T>(T message)
+    public virtual void Publish<T>(T message)
     {
         foreach (var handler in _handlers.Get<T>())
         {
@@ -23,7 +23,7 @@ public class WeakReferenceMessenger(bool isThreadSafe) : IMessenger
     }
 
     /// <inheritdoc />
-    public async Task PublishAsync<T>(T message)
+    public virtual async Task PublishAsync<T>(T message)
     {
         foreach (var handler in _handlers.Get<T>())
         {
@@ -32,25 +32,25 @@ public class WeakReferenceMessenger(bool isThreadSafe) : IMessenger
     }
 
     /// <inheritdoc />
-    public void Register<T>(object recipient, Action<T> action)
+    public virtual void Register<T>(object recipient, Action<T> action)
     {
         _handlers.Register(recipient, new Handler<T>(action));
     }
 
     /// <inheritdoc />
-    public void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
+    public virtual void Register<T>(object recipient, IMessenger.AsyncAction<T> action)
     {
         _handlers.Register(recipient, new AsyncHandler<T>(action));
     }
 
     /// <inheritdoc />
-    public void Register<T>(object recipient, IHandler<T> handler)
+    public virtual void Register<T>(object recipient, IHandler<T> handler)
     {
         _handlers.Register(recipient, handler);
     }
 
     /// <inheritdoc />
-    public void Unregister<T>(object recipient)
+    public virtual void Unregister<T>(object recipient)
     {
         _handlers.Unregister<T>(recipient);
     }
