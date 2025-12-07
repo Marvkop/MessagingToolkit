@@ -31,7 +31,7 @@ jobs:
         run: dotnet pack .\MessagingToolkit\MessagingToolkit.csproj -c RELEASE -o pack\core --include-source -p:Version=${{ github.ref_name }}
 
       - name: pack core
-        run: dotnet pack .\MessagingToolkit\MessagingToolkit.Wpf.csproj -c RELEASE -o pack\wpf --include-source -p:Version=${{ github.ref_name }}
+        run: dotnet pack .\MessagingToolkit.Wpf\MessagingToolkit.Wpf.csproj -c RELEASE -o pack\wpf --include-source -p:Version=${{ github.ref_name }}
 
       - name: upload
         uses: actions/upload-artifact@v4
