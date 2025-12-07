@@ -6,9 +6,9 @@ namespace MessagingToolkit.Messengers;
 /// <summary>
 /// Implementation of <see cref="IMessenger"/> using strong references.
 /// </summary>
-public class StrongReferenceMessenger : IMessenger
+public class StrongReferenceMessenger(bool isThreadSafe) : IMessenger
 {
-    private readonly StrongReferenceHolder _handlers = new();
+    private readonly StrongReferenceHolder _handlers = new(isThreadSafe);
 
     /// <inheritdoc />
     public void Publish<T>(T message)

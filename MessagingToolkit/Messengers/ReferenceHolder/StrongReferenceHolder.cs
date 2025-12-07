@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using MessagingToolkit.Async;
 using MessagingToolkit.Handlers;
 
 namespace MessagingToolkit.Messengers.ReferenceHolder;
@@ -6,7 +7,7 @@ namespace MessagingToolkit.Messengers.ReferenceHolder;
 /// <summary>
 /// Implementation of <see cref="IReferenceHolder"/> using strong references.
 /// </summary>
-internal class StrongReferenceHolder : IReferenceHolder
+public class StrongReferenceHolder(bool isThreadSafe) : IReferenceHolder
 {
     private readonly ConcurrentDictionary<Type, ConcurrentDictionary<object, IList<IHandler>>> _handlers = new();
 
@@ -19,10 +20,8 @@ internal class StrongReferenceHolder : IReferenceHolder
     /// <inheritdoc />
     public void Register(object recipient, IHandler handler, Type type)
     {
-        try
+        using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
         {
-            Monitor.Enter(_handlers);
-
             _handlers
                 .GetOrAdd(type, _ => new())
                 .AddOrUpdate(recipient, _ => [handler], (_, list) =>
@@ -30,10 +29,6 @@ internal class StrongReferenceHolder : IReferenceHolder
                     list.Add(handler);
                     return list;
                 });
-        }
-        finally
-        {
-            Monitor.Exit(_handlers);
         }
     }
 
@@ -46,18 +41,12 @@ internal class StrongReferenceHolder : IReferenceHolder
     /// <inheritdoc />
     public void Unregister(object recipient, Type type)
     {
-        try
+        using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
         {
-            Monitor.Enter(_handlers);
-
             if (_handlers.TryGetValue(type, out var handlers))
             {
                 handlers.Remove(recipient, out _);
             }
-        }
-        finally
-        {
-            Monitor.Exit(_handlers);
         }
     }
 
@@ -67,18 +56,12 @@ internal class StrongReferenceHolder : IReferenceHolder
         // explicit implementation to not enumerate twice
         if (_handlers.TryGetValue(typeof(T), out var handlers))
         {
-            try
+            using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
             {
-                Monitor.Enter(_handlers);
-
                 return handlers
                     .SelectMany(kvp => kvp.Value)
                     .OfType<IHandler<T>>()
                     .ToArray();
-            }
-            finally
-            {
-                Monitor.Exit(_handlers);
             }
         }
 
@@ -90,17 +73,11 @@ internal class StrongReferenceHolder : IReferenceHolder
     {
         if (_handlers.TryGetValue(type, out var handlers))
         {
-            try
+            using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
             {
-                Monitor.Enter(_handlers);
-
                 return handlers
                     .SelectMany(kvp => kvp.Value)
                     .ToArray();
-            }
-            finally
-            {
-                Monitor.Exit(_handlers);
             }
         }
 

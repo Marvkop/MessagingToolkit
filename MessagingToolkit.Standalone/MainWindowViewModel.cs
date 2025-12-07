@@ -6,7 +6,7 @@ namespace MessagingToolkit.Standalone;
 
 public partial class MainWindowViewModel : ObservableObject
 {
-    private readonly StrongReferenceMessenger _messenger = new();
+    private readonly StrongReferenceMessenger _messenger = new(true);
 
     public MainWindowViewModel()
     {

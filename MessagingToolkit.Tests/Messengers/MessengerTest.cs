@@ -5,15 +5,17 @@ namespace MessagingToolkit.Tests.Messengers;
 [TestFixture]
 [TestOf(typeof(IMessenger))]
 public abstract class MessengerTest<T>
-    where T : IMessenger, new()
+    where T : IMessenger
 {
     protected T Fixture { get; private set; }
 
     [SetUp]
     public void SetUp()
     {
-        Fixture = new T();
+        Fixture = SetUpFixture();
     }
+
+    protected abstract T SetUpFixture();
 
     [Test]
     public void ChainedPublish()

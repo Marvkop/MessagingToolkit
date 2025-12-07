@@ -8,9 +8,9 @@ namespace MessagingToolkit.Messengers;
 /// <br />
 /// <b>Cleanup is not automatic!</b> Make sure to call <see cref="Cleanup"/> at appropriate times.
 /// </summary>
-public class WeakReferenceMessenger : IMessenger
+public class WeakReferenceMessenger(bool isThreadSafe) : IMessenger
 {
-    private readonly WeakReferenceHolder _handlers = new();
+    private readonly WeakReferenceHolder _handlers = new(isThreadSafe);
 
     /// <inheritdoc />
     public void Publish<T>(T message)

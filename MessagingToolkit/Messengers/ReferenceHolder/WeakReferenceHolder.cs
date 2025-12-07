@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using MessagingToolkit.Async;
 using MessagingToolkit.Handlers;
 
 namespace MessagingToolkit.Messengers.ReferenceHolder;
@@ -8,7 +9,7 @@ namespace MessagingToolkit.Messengers.ReferenceHolder;
 /// <br />
 /// <b>Cleanup is not automatic!</b> Make sure to call <see cref="Cleanup"/> at appropriate times.
 /// </summary>
-internal class WeakReferenceHolder : IReferenceHolder
+internal class WeakReferenceHolder(bool isThreadSafe) : IReferenceHolder
 {
     private readonly ConcurrentDictionary<int, (WeakReference Reference, ISet<Type> Types)> _references = new();
     private readonly ConcurrentDictionary<Type, ConcurrentDictionary<int, IList<IHandler>>> _handlers = new();
@@ -22,10 +23,8 @@ internal class WeakReferenceHolder : IReferenceHolder
     /// <inheritdoc />
     public void Register(object recipient, IHandler handler, Type type)
     {
-        try
+        using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
         {
-            Monitor.Enter(_handlers);
-
             var hashCode = recipient.GetHashCode();
             var value = new WeakReference(recipient);
 
@@ -41,10 +40,6 @@ internal class WeakReferenceHolder : IReferenceHolder
                     return list;
                 });
         }
-        finally
-        {
-            Monitor.Exit(_handlers);
-        }
     }
 
     /// <inheritdoc />
@@ -56,10 +51,8 @@ internal class WeakReferenceHolder : IReferenceHolder
     /// <inheritdoc />
     public void Unregister(object recipient, Type type)
     {
-        try
+        using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
         {
-            Monitor.Enter(_handlers);
-
             var hashCode = recipient.GetHashCode();
 
             if (_references.TryGetValue(hashCode, out var value))
@@ -77,10 +70,6 @@ internal class WeakReferenceHolder : IReferenceHolder
                 }
             }
         }
-        finally
-        {
-            Monitor.Exit(_handlers);
-        }
     }
 
     /// <inheritdoc />
@@ -89,19 +78,13 @@ internal class WeakReferenceHolder : IReferenceHolder
         // explicit implementation to not enumerate twice
         if (_handlers.TryGetValue(typeof(T), out var handlers))
         {
-            try
+            using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
             {
-                Monitor.Enter(_handlers);
-
                 return handlers
                     .Where(kvp => _references[kvp.Key].Reference.IsAlive)
                     .SelectMany(kvp => kvp.Value)
                     .OfType<IHandler<T>>()
                     .ToArray();
-            }
-            finally
-            {
-                Monitor.Exit(_handlers);
             }
         }
 
@@ -113,18 +96,12 @@ internal class WeakReferenceHolder : IReferenceHolder
     {
         if (_handlers.TryGetValue(type, out var handlers))
         {
-            try
+            using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
             {
-                Monitor.Enter(_handlers);
-
                 return handlers
                     .Where(kvp => _references[kvp.Key].Reference.IsAlive)
                     .SelectMany(kvp => kvp.Value)
                     .ToArray();
-            }
-            finally
-            {
-                Monitor.Exit(_handlers);
             }
         }
 
@@ -136,10 +113,8 @@ internal class WeakReferenceHolder : IReferenceHolder
     /// </summary>
     public void Cleanup()
     {
-        try
+        using (DisposableMonitorLock.CreateDisposable(isThreadSafe, _handlers))
         {
-            Monitor.Enter(_handlers);
-
             var deadReferences = _references.Where(kvp => !kvp.Value.Reference.IsAlive).Select(kvp => (kvp.Key, kvp.Value.Types)).ToList();
 
             foreach (var (key, types) in deadReferences)
@@ -158,10 +133,6 @@ internal class WeakReferenceHolder : IReferenceHolder
 
                 _references.Remove(key, out _);
             }
-        }
-        finally
-        {
-            Monitor.Exit(_handlers);
         }
     }
 }

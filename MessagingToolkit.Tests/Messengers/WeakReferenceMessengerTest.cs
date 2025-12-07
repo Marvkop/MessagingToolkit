@@ -29,4 +29,6 @@ public class WeakReferenceMessengerTest : MessengerTest<WeakReferenceMessenger>
     }
 
     private record TestMessage;
+
+    protected override WeakReferenceMessenger SetUpFixture() => new(true);
 }
