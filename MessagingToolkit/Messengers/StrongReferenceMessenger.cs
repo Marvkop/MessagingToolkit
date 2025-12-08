@@ -1,4 +1,5 @@
-﻿using MessagingToolkit.Handlers;
+﻿using MessagingToolkit.Handlers.Messaging;
+using MessagingToolkit.Messengers.Interfaces;
 using MessagingToolkit.Messengers.ReferenceHolder;
 
 namespace MessagingToolkit.Messengers;

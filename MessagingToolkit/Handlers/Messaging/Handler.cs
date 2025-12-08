@@ -1,4 +1,4 @@
-﻿namespace MessagingToolkit.Handlers;
+﻿namespace MessagingToolkit.Handlers.Messaging;
 
 /// <summary>
 /// Base-Handler providing execution

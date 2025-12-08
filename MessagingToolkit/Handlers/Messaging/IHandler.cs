@@ -1,4 +1,4 @@
-﻿namespace MessagingToolkit.Handlers;
+﻿namespace MessagingToolkit.Handlers.Messaging;
 
 /// <summary>
 /// Non-generic interface for clearer storing in dictionaries.
