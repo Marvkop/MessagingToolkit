@@ -1,4 +1,4 @@
-﻿namespace MessagingToolkit.Handlers;
+﻿namespace MessagingToolkit.Handlers.Messaging;
 
 /// <summary>
 /// Implementations provide the actions to execute when a message is published.

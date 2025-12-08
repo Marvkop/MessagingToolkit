@@ -1,6 +1,6 @@
-﻿using MessagingToolkit.Messengers;
+﻿using MessagingToolkit.Messengers.Interfaces;
 
-namespace MessagingToolkit.Handlers;
+namespace MessagingToolkit.Handlers.Messaging;
 
 public class AsyncHandler<T>(IMessenger.AsyncAction<T> action) : IHandler<T>
 {

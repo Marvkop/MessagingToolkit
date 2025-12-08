@@ -1,4 +1,5 @@
 ﻿using MessagingToolkit.Messengers;
+using MessagingToolkit.Messengers.Interfaces;
 
 namespace MessagingToolkit.Tests.Messengers;
 

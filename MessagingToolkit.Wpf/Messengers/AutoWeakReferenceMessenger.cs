@@ -1,6 +1,8 @@
 ﻿using System.Windows.Threading;
 using MessagingToolkit.Handlers;
+using MessagingToolkit.Handlers.Messaging;
 using MessagingToolkit.Messengers;
+using MessagingToolkit.Messengers.Interfaces;
 
 namespace MessagingToolkit.Wpf.Messengers;
 

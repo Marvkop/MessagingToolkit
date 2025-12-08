@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using MessagingToolkit.Async;
-using MessagingToolkit.Handlers;
+using MessagingToolkit.Handlers.Messaging;
 
 namespace MessagingToolkit.Messengers.ReferenceHolder;
 

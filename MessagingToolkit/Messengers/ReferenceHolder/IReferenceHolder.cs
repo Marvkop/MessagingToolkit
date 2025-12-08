@@ -1,4 +1,4 @@
-﻿using MessagingToolkit.Handlers;
+﻿using MessagingToolkit.Handlers.Messaging;
 
 namespace MessagingToolkit.Messengers.ReferenceHolder;
 

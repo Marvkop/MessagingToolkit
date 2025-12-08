@@ -1,6 +1,6 @@
-﻿using MessagingToolkit.Handlers;
+﻿using MessagingToolkit.Handlers.Messaging;
 
-namespace MessagingToolkit.Messengers;
+namespace MessagingToolkit.Messengers.Interfaces;
 
 /// <summary>
 /// Implementations handle messaging.
